@@ -70,17 +70,10 @@ app.use("/api/media/", require("./routes/adminMediaUploadRouter.js"));
 // PORT
 const port = process.env.PORT || 8080;
 
-// STATIC FILES RUNNING ON BUILD FOLDER
-if (process.env.NODE_MODE === "production") {
-  app.use(express.static(path.join(__dirname, "./client/build")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "./client/build/index.html"));
-  });
-} else {
-  app.get("/", (req, res) => {
-    res.send("API running..");
-  });
-}
+app.get("/", (req, res) => {
+  res.send("API running...");
+});
+
 
 // Listen
 app.listen(port, (req, res) => {
