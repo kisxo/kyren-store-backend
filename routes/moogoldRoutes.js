@@ -1,13 +1,16 @@
 const express = require("express");
 const axios = require("axios");
+const qs = require('qs');
 const base64 = require("base-64");
 const paymentModel = require("../models/paymentModel");
 const productModel = require("../models/productModel");
 const orderModel = require("../models/orderModel");
+const paymentRequestModel = require("../models/paymentRequestModel");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
 const browserMiddleware = require("../middlewares/browserMiddleware");
+const { error } = require("console");
 const router = express.Router();
 
 const generateBasicAuthHeader = () => {
@@ -114,9 +117,18 @@ router.post("/moogold-servers", browserMiddleware, async (req, res) => {
   }
 });
 
-router.post("/check-moogold-upi-order", browserMiddleware, async (req, res) => {
+router.get("/check-moogold-upi-order", browserMiddleware, async (req, res) => {
   try {
     const { orderId } = req.query;
+    // console.log(orderId)
+    const paymentRequest = await paymentRequestModel.findOne({ orderId: orderId });
+    if (paymentRequest === null)
+    {
+      return res.status(404).json({ message: "payment request not found!" });
+    }
+    
+    // console.log(paymentRequest)
+    // return res.status(418).json({ message: "Teaaaa pot \n\n" });
 
     const existingPayment = await paymentModel.findOne({
       orderId: orderId,
@@ -125,27 +137,39 @@ router.post("/check-moogold-upi-order", browserMiddleware, async (req, res) => {
       return res.redirect("https://wurustore.in/user-dashboard");
     }
 
-    const orderStatusResponse = await axios.post(
-      "https://pgateway.in/order/status",
-      {
-        token: process.env.API_TOKEN,
-        order_id: orderId,
-      }
-    );
+    const payment_gateway_url = 'https://exgateway.com/api/check-order-status';
+
+    let order_data = qs.stringify({
+      'user_token': process.env.API_TOKEN,
+      'order_id': orderId,
+    });
+
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: payment_gateway_url,
+      headers: { 
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data : order_data
+    };
+
+    let orderStatusResponse = await axios.request(config)
+
+    // console.log(orderStatusResponse.data)
+    //test payment
+    const transactionDetails = orderStatusResponse.data.result;
+    // console.log(transactionDetails)
+    // return res.status(418).json({ message: "Teaaaa pot \n\n" });
 
     if (orderStatusResponse.data.status) {
-      const transactionDetails = orderStatusResponse.data.results;
-      if (transactionDetails.status === "Success") {
-        const {
-          order_id,
-          txn_note,
-          customer_email,
-          customer_mobile,
-          txn_amount,
-          product_name,
-          utr_number,
-          customer_name,
-        } = transactionDetails;
+      
+      const transactionDetails = orderStatusResponse.data.result;
+      
+      if (transactionDetails.txnStatus === "SUCCESS") {
+        const utr_number  = transactionDetails.utr;
+        const {txn_note, customer_email, customer_mobile, txn_amount, product_name, customer_name} = paymentRequest;
+        const order_id = paymentRequest.orderId;
 
         // saving payment
         const paymentObject = {
@@ -327,12 +351,14 @@ router.post("/check-moogold-upi-order", browserMiddleware, async (req, res) => {
         }
         return res.redirect("https://wurustore.in/user-dashboard");
       } else {
+        console.log(error)
         console.error("OrderID Not Found");
         return res.status(404).json({ error: "OrderID Not Found" });
       }
     }
   } catch (error) {
-    return res.status(500).json({ error: "Internal server error" });
+    console.log(error)
+    return res.status(500).json({ error: "Internal server error last" });
   }
 });
 

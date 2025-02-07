@@ -4,6 +4,7 @@ const axios = require("axios");
 const paymentModel = require("../models/paymentModel");
 const productModel = require("../models/productModel");
 const orderModel = require("../models/orderModel");
+const paymentRequestModel = require("../models/paymentRequestModel");
 const sendMail = require("../controllers/sendMail");
 const md5 = require("md5");
 const querystring = require("querystring");
@@ -158,19 +159,37 @@ router.post("/create-api-upi-order", authMiddleware, async (req, res) => {
     }
 
 
-    let order_data = qs.stringify({
-      'user_token': process.env.API_TOKEN,
-      'order_id': order_id,
-      'amount': txn_amount,
-      'txn_amount': txn_amount,
-      'txn_note': txn_note,
-      'product_name': product_name,
-      'customer_name':  customer_name,
-      'customer_email': customer_email,
+    // let order_data = {
+    //   'user_token': process.env.API_TOKEN,
+    //   'order_id': order_id,
+    //   'amount': txn_amount,
+    //   'txn_amount': txn_amount,
+    //   'txn_note': txn_note,
+    //   'product_name': product_name,
+    //   'customer_name':  customer_name,
+    //   'customer_email': customer_email,
+    //   'customer_mobile': customer_mobile,
+    //   'redirect_url': callback_url,
+    // };
+
+    let upi_order = qs.stringify({
       'customer_mobile': customer_mobile,
+      'user_token': process.env.API_TOKEN,
+      'amount': txn_amount,
+      'order_id': order_id,
       'redirect_url': callback_url,
     });
 
+    const paymentRequest = new paymentRequestModel({
+      orderId: order_id,
+      txn_note: txn_note,
+      customer_email: customer_email,
+      customer_mobile: customer_mobile,
+      txn_amount: txn_amount,
+      product_name: product_name,
+      customer_name: customer_name,
+    });
+    
     const payment_gateway_url = 'https://exgateway.com/api/create-order';
 
     let config = {
@@ -180,12 +199,14 @@ router.post("/create-api-upi-order", authMiddleware, async (req, res) => {
       headers: { 
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      data : order_data
+      data : upi_order
     };
+
+    await paymentRequest.save();
     let response = await axios.request(config)
-    console.log(response)
+    // console.log(response)
     if(response.data && response.data.status === true)
-    {
+    { 
       return res.status(200).send({ success: true, data: response.data });
     }
     // // res.cookie("orderInProgress", true);
@@ -201,33 +222,47 @@ router.post("/create-api-upi-order", authMiddleware, async (req, res) => {
 router.post("/check-api-upi-order", async (req, res) => {
   try {
     const { orderId } = req.query;
+    const paymentRequest = await paymentRequestModel.findOne({ orderId: orderId });
+
+    if (paymentRequest === null)
+    {
+      return res.status(404).json({ message: "payment request not found!" });
+    }
 
     const existingOrder = await orderModel.findOne({ orderId: orderId });
     if (existingOrder) {
       return res.redirect("https://wurustore.in/user-dashboard");
     }
 
-    const orderStatusResponse = await axios.post(
-      "https://pgateway.in/order/status",
-      {
-        token: process.env.API_TOKEN,
-        order_id: orderId,
-      }
-    );
-    // Check if the order ID is found
+    const payment_gateway_url = 'https://exgateway.com/api/check-order-status';
+
+    let order_data = qs.stringify({
+      'user_token': process.env.API_TOKEN,
+      'order_id': orderId,
+    });
+
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: payment_gateway_url,
+      headers: { 
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data : order_data
+    };
+
+    let orderStatusResponse = await axios.request(config)
+
+    const transactionDetails = orderStatusResponse.data.result;
+
     if (orderStatusResponse.data.status) {
-      const transactionDetails = orderStatusResponse.data.results;
-      if (transactionDetails.status === "Success") {
-        const {
-          order_id,
-          txn_note,
-          customer_email,
-          customer_mobile,
-          txn_amount,
-          product_name,
-          utr_number,
-          customer_name,
-        } = transactionDetails;
+
+      const transactionDetails = orderStatusResponse.data.result;
+
+      if (transactionDetails.txnStatus === "SUCCESS") {
+        const utr_number  = transactionDetails.utr;
+        const {txn_note, customer_email, customer_mobile, txn_amount, product_name, customer_name} = paymentRequest;
+        const order_id = paymentRequest.orderId;
 
         const [userid, zoneid, productids, pname, amount] = txn_note.split("@");
         const productid = productids.split("&");
