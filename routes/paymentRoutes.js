@@ -1,4 +1,5 @@
 const express = require("express");
+const qs = require('qs');
 const axios = require("axios");
 const paymentModel = require("../models/paymentModel");
 const productModel = require("../models/productModel");
@@ -156,31 +157,47 @@ router.post("/create-api-upi-order", authMiddleware, async (req, res) => {
       return res.redirect("https://wurustore.in/user-dashboard");
     }
 
-    const response = await axios.post("https://pgateway.in/order/create", {
-      token: process.env.API_TOKEN,
-      order_id,
-      txn_amount,
-      txn_note,
-      product_name,
-      customer_name,
-      customer_email,
-      customer_mobile,
-      callback_url,
+
+    let order_data = qs.stringify({
+      'user_token': process.env.API_TOKEN,
+      'order_id': order_id,
+      'amount': txn_amount,
+      'txn_amount': txn_amount,
+      'txn_note': txn_note,
+      'product_name': product_name,
+      'customer_name':  customer_name,
+      'customer_email': customer_email,
+      'customer_mobile': customer_mobile,
+      'redirect_url': callback_url,
     });
 
-    if (response.data && response.data.status === false) {
-      console.log(response.data);
-      return res
-        .status(201)
-        .send({ success: false, message: res.data.message });
+    const payment_gateway_url = 'https://exgateway.com/api/create-order';
+
+    let config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: payment_gateway_url,
+      headers: { 
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data : order_data
+    };
+    let response = await axios.request(config)
+    console.log(response)
+    if(response.data && response.data.status === true)
+    {
+      return res.status(200).send({ success: true, data: response.data });
     }
-    // res.cookie("orderInProgress", true);
-    return res.status(200).send({ success: true, data: response.data });
+    // // res.cookie("orderInProgress", true);
+    return res.status(200).send({ error: "payment gateway error" });
+
   } catch (error) {
-    console.log(error);
+    console.log("errorlog\n\n")
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+
 router.post("/check-api-upi-order", async (req, res) => {
   try {
     const { orderId } = req.query;
