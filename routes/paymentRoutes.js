@@ -219,7 +219,7 @@ router.post("/create-api-upi-order", authMiddleware, async (req, res) => {
 });
 
 
-router.post("/check-api-upi-order", async (req, res) => {
+router.get("/check-api-upi-order", async (req, res) => {
   try {
     const { orderId } = req.query;
     const paymentRequest = await paymentRequestModel.findOne({ orderId: orderId });
