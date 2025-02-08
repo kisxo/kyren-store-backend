@@ -219,7 +219,7 @@ router.post("/create-api-upi-order", authMiddleware, async (req, res) => {
 });
 
 
-router.get("/check-api-upi-order", async (req, res) => {
+router.get("/check-api-upi-order", browserMiddleware, async (req, res) => {
   try {
     const { orderId } = req.query;
     const paymentRequest = await paymentRequestModel.findOne({ orderId: orderId });
@@ -320,7 +320,7 @@ router.get("/check-api-upi-order", async (req, res) => {
           mobile: customer_mobile,
           amount: txn_amount,
           orderId: order_id,
-          status: transactionDetails.status,
+          status: transactionDetails.txnStatus,
           utrNumber: utr_number,
         };
         const existingPayment = await paymentModel.findOne({

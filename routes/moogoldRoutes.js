@@ -178,7 +178,7 @@ router.get("/check-moogold-upi-order", browserMiddleware, async (req, res) => {
           mobile: customer_mobile,
           amount: txn_amount,
           orderId: order_id,
-          status: transactionDetails.status,
+          status: transactionDetails.txnStatus,
           utrNumber: utr_number,
         };
         const newPayment = new paymentModel(paymentObject);
