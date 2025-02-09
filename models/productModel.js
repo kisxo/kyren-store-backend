@@ -7,7 +7,10 @@ const productSchema = new mongoose.Schema({
   },
   groups:{
     type: Array,
-    default: []
+    default: [{
+      "name": "all",
+      "image": "https://wurustore.in/media/product-assets/a.png"
+    }]
   },
   image: {
     type: String,

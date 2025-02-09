@@ -30,6 +30,41 @@ router.post("/add", addGroupIcon.single('image'), async (req, res) => {
         if (product.length === 0) {
           return res.status(200).send({ success: false, message: "No Product Found" });
         }
+        
+        newGroup = {
+            "name": groupName,
+            "productId": productId,
+            "image": "/media/groupIcon/group--"+ productId + "--" + product[0].groups.length + ".jpeg"
+        }
+
+        var groups = product[0].groups
+
+        groups.push(newGroup)
+
+        const updatedProduct = await productModel.findByIdAndUpdate(
+            productId,{groups},{ new: true }
+        );
+
+        await updatedProduct.save();
+        res.send({"stauts": "true"})
+    }catch(error){
+        console.log(error.message)
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+router.post("/item-add", addGroupIcon.single('image'), async (req, res) => {
+    try{
+        const {
+            groupName,
+            itemId,
+            image
+        } = req.body
+    
+        const product = await productModel.find({ _id: productId});
+        if (product.length === 0) {
+          return res.status(200).send({ success: false, message: "No Product Found" });
+        }
 
         newGroup = {
             "name": groupName,
@@ -49,16 +84,19 @@ router.post("/add", addGroupIcon.single('image'), async (req, res) => {
         const product1 = await productModel.find({ _id: productId});
         console.log(product1[0].groups)
 
-        // console.log(product[0].cost)
+        console.log(product[0].cost)
         // console.log(groupName)
         // console.log(image)
 
         res.send({"stauts": "true"})
     }catch(error){
         console.log(error.message)
-        res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 });
+
+
+
 
 router.get("/", (req, res) => {
     res.send("Grooup API running..");
