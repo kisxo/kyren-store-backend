@@ -30,7 +30,7 @@ router.post("/add", addGroupIcon.single('image'), async (req, res) => {
         if (product.length === 0) {
           return res.status(200).send({ success: false, message: "No Product Found" });
         }
-        
+
         newGroup = {
             "name": groupName,
             "productId": productId,
@@ -58,7 +58,7 @@ router.post("/item-add", addGroupIcon.single('image'), async (req, res) => {
         const {
             groupName,
             itemId,
-            image
+            productId
         } = req.body
     
         const product = await productModel.find({ _id: productId});
@@ -66,37 +66,42 @@ router.post("/item-add", addGroupIcon.single('image'), async (req, res) => {
           return res.status(200).send({ success: false, message: "No Product Found" });
         }
 
-        newGroup = {
-            "name": groupName,
-            "productId": productId,
-            "image": "/media/groupIcon/group--"+ productId + "--" + product[0].groups.length + ".jpeg"
+        cost = product[0].cost
+
+        var groupExists = false
+
+        product[0].groups.forEach((group) => {
+            if(group["name"] === groupName)
+            {
+                groupExists = true
+            }
+        });
+
+        if(!groupExists)
+        {
+            return res.status(404).json({ 'message': "Group name not found" });
         }
 
-        var groups = product[0].groups
+        cost.forEach((item) => {
 
-        groups.push(newGroup)
+            if(itemId === item["id"])
+            {
+                item["groupName"] = groupName;
+            }
+        });
 
         const updatedProduct = await productModel.findByIdAndUpdate(
-            productId,{groups},{ new: true }
+            productId,{cost},{ new: true }
         );
 
-        await updatedProduct.save();
-        const product1 = await productModel.find({ _id: productId});
-        console.log(product1[0].groups)
+        await updatedProduct.save()
 
-        console.log(product[0].cost)
-        // console.log(groupName)
-        // console.log(image)
-
-        res.send({"stauts": "true"})
+        return res.send({"status": "true"})
     }catch(error){
         console.log(error.message)
         return res.status(500).json({ error: "Internal Server Error" });
     }
 });
-
-
-
 
 router.get("/", (req, res) => {
     res.send("Grooup API running..");
