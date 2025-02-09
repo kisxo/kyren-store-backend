@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
     type: Array,
     default: [{
       "name": "all",
-      "image": "https://wurustore.in/media/product-assets/a.png"
+      "image": "/media/groupIcon/default.png"
     }]
   },
   image: {
