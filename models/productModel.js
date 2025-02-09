@@ -6,7 +6,8 @@ const productSchema = new mongoose.Schema({
     required: [true, "Product name is required"],
   },
   groups:{
-    type: Array
+    type: Array,
+    default: []
   },
   image: {
     type: String,
