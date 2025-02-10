@@ -3,6 +3,7 @@ const multer = require("multer");
 const fs = require("fs");
 const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
 const productModel = require("../models/productModel");
+const authMiddleware = require("../middlewares/authMiddleware");
 
 // router object
 const router = express.Router();
@@ -18,7 +19,7 @@ const storage = multer.diskStorage({
 
 const addGroupIcon = multer({ storage: storage });
 
-router.post("/add", addGroupIcon.single('image'), async (req, res) => {
+router.post("/add",adminAuthMiddleware, addGroupIcon.single('image'), async (req, res) => {
     try{
         const {
             groupName,
@@ -53,7 +54,7 @@ router.post("/add", addGroupIcon.single('image'), async (req, res) => {
     }
 });
 
-router.post("/item-add", addGroupIcon.single('image'), async (req, res) => {
+router.post("/item-add",adminAuthMiddleware, addGroupIcon.single('image'), async (req, res) => {
     try{
         const {
             groupName,
@@ -106,7 +107,7 @@ router.post("/item-add", addGroupIcon.single('image'), async (req, res) => {
     }
 });
 
-router.delete("/", async (req, res) => {
+router.delete("/", adminAuthMiddleware, async (req, res) => {
     try {
         const { 
             productId,
@@ -171,10 +172,6 @@ router.delete("/", async (req, res) => {
             success: false,
         });
     }
-});
-
-router.get("/", (req, res) => {
-    res.send("Grooup API running..");
 });
 
 module.exports = router;
