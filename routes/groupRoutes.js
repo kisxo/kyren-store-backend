@@ -69,11 +69,13 @@ router.post("/item-add", addGroupIcon.single('image'), async (req, res) => {
         cost = product[0].cost
 
         var groupExists = false
+        var imageLink = ''
 
         product[0].groups.forEach((group) => {
             if(group["name"] === groupName)
             {
                 groupExists = true
+                imageLink = group["image"]
             }
         });
 
@@ -87,6 +89,7 @@ router.post("/item-add", addGroupIcon.single('image'), async (req, res) => {
             if(itemId === item["id"])
             {
                 item["groupName"] = groupName;
+                item["image"] = imageLink
             }
         });
 
