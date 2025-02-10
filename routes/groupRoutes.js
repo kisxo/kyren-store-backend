@@ -34,7 +34,7 @@ router.post("/add", addGroupIcon.single('image'), async (req, res) => {
         newGroup = {
             "name": groupName,
             "productId": productId,
-            "image": "/media/groupIcon/group--"+ productId + "--" + product[0].groups.length + ".jpeg"
+            "image": "/media/groupIcon/group--"+ productId + "--" + groupName.replace(' ', '-') + ".jpeg"
         }
 
         var groups = product[0].groups
@@ -46,7 +46,7 @@ router.post("/add", addGroupIcon.single('image'), async (req, res) => {
         );
 
         await updatedProduct.save();
-        res.send({"stauts": "true"})
+        res.status(201).send({"stauts": "true"})
     }catch(error){
         console.log(error.message)
         return res.status(500).json({ error: "Internal Server Error" });
@@ -99,10 +99,77 @@ router.post("/item-add", addGroupIcon.single('image'), async (req, res) => {
 
         await updatedProduct.save()
 
-        return res.send({"status": "true"})
+        return res.status(201).send({"status": "true"})
     }catch(error){
         console.log(error.message)
         return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+router.delete("/", async (req, res) => {
+    try {
+        const { 
+            productId,
+            groupName
+        } = req.body;
+
+        if(groupName === "all")
+        {
+            return res
+            .status(400)
+            .send({ success: false, message: "Cannot Delete default group" });
+        }
+
+        const product = await productModel.findById({ _id: productId });
+
+        if (!product) {
+            return res
+            .status(404)
+            .send({ success: false, message: "Product not found" });
+        }
+
+        var groups = []
+        var cost = []
+        var groupExists = false
+
+        product.groups.forEach((group) => {
+            if(group["name"] === groupName)
+            {   
+                groupExists = true
+            }
+            else{
+                groups.push(group)
+            }
+        });
+        if(!groupExists)
+        {
+            return res.status(404).json({ 'message': "Group name not found" });
+        }
+
+        product.cost.forEach((item) => {
+            if(item["groupName"] === groupName)
+            {
+                delete item["groupName"];
+                delete item["image"]
+            }
+
+            cost.push(item)
+        });
+
+        const updatedProduct = await productModel.findByIdAndUpdate(
+            productId,{groups, cost},{ new: true }
+        );
+
+        await updatedProduct.save()
+
+        return res.status(204).send({"status": "deleted"})
+
+    } catch (error) {
+        console.log(error.message)
+        return res.status(500).send({
+            message: `Delete Product Ctrl ${error.message}`,
+            success: false,
+        });
     }
 });
 
