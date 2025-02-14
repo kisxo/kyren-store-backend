@@ -67,6 +67,7 @@ app.use("/api/payment/", require("./routes/paymentRoutes"));
 app.use("/api/moogold/", require("./routes/moogoldRoutes.js"));
 app.use("/api/media/", require("./routes/adminMediaUploadRouter.js"));
 app.use("/api/group/", require("./routes/groupRoutes.js"));
+app.use("/api/tab/", require("./routes/tabRoutes.js"));
 
 // PORT
 const port = process.env.PORT || 8080;
