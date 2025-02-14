@@ -17,9 +17,9 @@ const storage = multer.diskStorage({
   },
 });
 
-const addGroupIcon = multer({ storage: storage });
+const addTabIcon = multer({ storage: storage });
 
-router.post("/add", addGroupIcon.single('image'), async (req, res) => {
+router.post("/add", addTabIcon.single('image'), async (req, res) => {
 
     try{
         const {
@@ -55,10 +55,10 @@ router.post("/add", addGroupIcon.single('image'), async (req, res) => {
     }
 });
 
-router.post("/tab-add",adminAuthMiddleware, addGroupIcon.single('image'), async (req, res) => {
+router.post("/item-add", addTabIcon.single('image'), async (req, res) => {
     try{
         const {
-            groupName,
+            tabName,
             itemId,
             productId
         } = req.body
@@ -70,28 +70,28 @@ router.post("/tab-add",adminAuthMiddleware, addGroupIcon.single('image'), async 
 
         cost = product[0].cost
 
-        var groupExists = false
+        var tabExists = false
         var imageLink = ''
 
-        product[0].groups.forEach((group) => {
-            if(group["name"] === groupName)
+        product[0].tabs.forEach((tab) => {
+            if(tab["name"] === tabName)
             {
-                groupExists = true
-                imageLink = group["image"]
+                tabExists = true
+                imageLink = tab["image"]
             }
         });
 
-        if(!groupExists)
+        if(!tabExists)
         {
-            return res.status(404).json({ 'message': "Group name not found" });
+            return res.status(404).json({ 'message': "Tab name not found" });
         }
 
         cost.forEach((item) => {
 
             if(itemId === item["id"])
             {
-                item["groupName"] = groupName;
-                item["image"] = imageLink
+                item["tabName"] = tabName;
+                item["tabImage"] = imageLink
             }
         });
 
@@ -108,18 +108,18 @@ router.post("/tab-add",adminAuthMiddleware, addGroupIcon.single('image'), async 
     }
 });
 
-router.delete("/", adminAuthMiddleware, async (req, res) => {
+router.delete("/",addTabIcon.single('image') , async (req, res) => {
     try {
         const { 
             productId,
-            groupName
+            tabName
         } = req.body;
 
-        if(groupName === "all")
+        if(tabName === "all")
         {
             return res
             .status(400)
-            .send({ success: false, message: "Cannot Delete default group" });
+            .send({ success: false, message: "Cannot Delete default tab" });
         }
 
         const product = await productModel.findById({ _id: productId });
@@ -130,36 +130,36 @@ router.delete("/", adminAuthMiddleware, async (req, res) => {
             .send({ success: false, message: "Product not found" });
         }
 
-        var groups = []
+        var tabs = []
         var cost = []
-        var groupExists = false
+        var tabExists = false
 
-        product.groups.forEach((group) => {
-            if(group["name"] === groupName)
+        product.tabs.forEach((tab) => {
+            if(tab["name"] === tabName)
             {   
-                groupExists = true
+                tabExists = true
             }
             else{
-                groups.push(group)
+                tabs.push(tab)
             }
         });
-        if(!groupExists)
+        if(!tabExists)
         {
-            return res.status(404).json({ 'message': "Group name not found" });
+            return res.status(404).json({ 'message': "Tab name not found" });
         }
 
         product.cost.forEach((item) => {
-            if(item["groupName"] === groupName)
+            if(item["tabName"] === tabName)
             {
-                delete item["groupName"];
-                delete item["image"]
+                delete item["tabName"];
+                delete item["tabImage"]
             }
 
             cost.push(item)
         });
 
         const updatedProduct = await productModel.findByIdAndUpdate(
-            productId,{groups, cost},{ new: true }
+            productId,{tabs, cost},{ new: true }
         );
 
         await updatedProduct.save()
