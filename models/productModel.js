@@ -12,6 +12,13 @@ const productSchema = new mongoose.Schema({
       "image": "/media/groupIcon/default.png"
     }]
   },
+  tabs:{
+    type: Array,
+    default: [{
+      "name": "all",
+      "image": "/media/tabIcon/default.png"
+    }],
+  },
   image: {
     type: String,
   },
