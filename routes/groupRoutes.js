@@ -107,7 +107,7 @@ router.post("/item-add",adminAuthMiddleware, addGroupIcon.single('image'), async
     }
 });
 
-router.delete("/", adminAuthMiddleware, async (req, res) => {
+router.delete("/", adminAuthMiddleware, addGroupIcon.single('image'), async (req, res) => {
     try {
         const { 
             productId,
