@@ -55,7 +55,7 @@ const addProductController = async (req, res) => {
 
 const updateProductController = async (req, res) => {
   try {
-    const { id, name, desc, descTwo, api, apiName, gameName, region, cost } =
+    const { id, name,category, desc, descTwo, api, apiName, gameName, region, cost } =
       req.body;
 
     const product = await productModel.findOne({ _id: id });
@@ -72,6 +72,7 @@ const updateProductController = async (req, res) => {
         name,
         desc,
         descTwo,
+        category,
         api,
         region,
         apiName,
