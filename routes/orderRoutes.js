@@ -6,6 +6,7 @@ const {
   getOrderByIdController,
   updateResIdController,
   updateOrderStatus,
+  orderSumController,
 } = require("../controllers/orderCtrl");
 const authMiddleware = require("../middlewares/authMiddleware");
 const browserMiddleware = require("../middlewares/browserMiddleware");
@@ -17,5 +18,6 @@ const router = express.Router();
 router.post("/get-user-orders", authMiddleware, getAllOrdersController);
 router.post("/get-order-by-id", authMiddleware, getOrderByIdController);
 router.post("/track-order", browserMiddleware, trackOrderController);
+router.get("/sum", browserMiddleware, orderSumController);
 
 module.exports = router;

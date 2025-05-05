@@ -216,6 +216,22 @@ const updateResIdController = async (req, res) => {
   }
 };
 
+const orderSumController = async (req, res) => {
+  const result = await orderModel.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalSales: {
+          $sum: { $toDouble: "$amount" }
+        }
+      }
+    }
+  ])
+  const total = result[0]?.totalSales || 0;
+  
+  return res.status(201).send({ success: true, total: total });
+}
+
 module.exports = {
   placeOrderController,
   trackOrderController,
@@ -223,4 +239,5 @@ module.exports = {
   getOrderByIdController,
   updateResIdController,
   updateOrderStatus,
+  orderSumController,
 };
