@@ -214,10 +214,47 @@ const deleteModelController = async (req, res) => {
 };
 
 // ================= ORDERS
+function getDateRange(dateStr) {
+  const start = new Date(dateStr);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1); // Get the next day
+  return { start, end };
+}
 
 const adminGetAllOrdersController = async (req, res) => {
   try {
-    const orders = await orderModel.find({});
+
+    const page = parseInt(req.query.page) - 1 || 0;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+    let sort = req.query.sort || "createdAt";
+    const { date } = req.query;
+    let filter = {};
+
+    if (date) {
+      // If date is provided, filter by that date
+      const { start, end } = getDateRange(date);
+      filter.createdAt = { $gte: start, $lt: end };
+    }
+
+    filter.email = { $regex: search, $options: 'i' }; // case-insensitive search
+
+    req.query.sort ? (sort = req.query.sort.split(",")) : (sort = [sort]);
+
+    let sortBy = {};
+    if (sort[1]){
+      sortBy[sort[0]] = sort[1];
+    } else {
+      sortBy[sort[0]] = "asc";
+    }
+     
+    const orders = await orderModel.find(filter)
+      .sort(sortBy)
+      .skip(page * limit)
+      .limit(limit);
+
+    const total = await orderModel.countDocuments(filter);
+
     if (!orders || orders.length === 0) {
       return res
         .status(200)
@@ -240,9 +277,14 @@ const adminGetAllOrdersController = async (req, res) => {
     ]);
     return res.status(201).send({
       success: true,
+      total,
+      page: page + 1,
+      limit,
+      date,
+      sort,
       message: "All Orders Fetched Success",
       data: orders,
-      total: totalAmount.length > 0 ? totalAmount[0].total : 0,
+      totalAmount: totalAmount.length > 0 ? totalAmount[0].total : 0,
     });
   } catch (error) {
     console.error("Error in adminGetAllOrdersController:", error);
