@@ -18,7 +18,7 @@ app.set('trust proxy', 1);
 // Set up session middleware
 app.use(
   session({
-    secret: "WURU@#$!@#",
+    secret: "KAISEN@#$!@#",
     resave: false,
     saveUninitialized: true,
     cookie: {
@@ -71,9 +71,9 @@ app.use("/api/tab/", require("./routes/tabRoutes.js"));
 app.use("/api/stats/", require("./routes/statsRouter.js"));
 
 // PORT
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 8000;
 
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
   res.send("API running...");
 });
 
