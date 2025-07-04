@@ -69,6 +69,7 @@ app.use("/api/media/", require("./routes/adminMediaUploadRouter.js"));
 app.use("/api/group/", require("./routes/groupRoutes.js"));
 app.use("/api/tab/", require("./routes/tabRoutes.js"));
 app.use("/api/stats/", require("./routes/statsRouter.js"));
+app.use("/api/account/", require("./routes/accountRoutes.js"));
 
 // PORT
 const port = process.env.PORT || 8000;
