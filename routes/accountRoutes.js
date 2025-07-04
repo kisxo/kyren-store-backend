@@ -2,7 +2,8 @@ const express = require("express");
 const multer = require("multer");
 const fs = require("fs");
 const {
-  addAccountController
+  addAccountController,
+  getAllAccountsController
 } = require("../controllers/accountCtrl");
 const browserMiddleware = require("../middlewares/browserMiddleware");
 const adminAuthMiddleware = require("../middlewares/adminAuthMiddleware");
@@ -25,7 +26,7 @@ const upload = multer({ storage: storage });
 router.post("/add-account", upload.single("image"), adminAuthMiddleware, addAccountController);
 //router.post("/update-product", upload.single("image"), adminAuthMiddleware, updateProductController);
 //router.post("/delete-product", adminAuthMiddleware, deleteProductController);
-//router.get("/get-all-products", browserMiddleware, getAllProductsController);
+router.get("/get-all-accounts", browserMiddleware, getAllAccountsController);
 //router.post("/get-product", browserMiddleware, getProductController);
 //router.post("/product-by-category", getProductByCategoryController);
 //router.post("/get-product-by-name", getProductByNameController);

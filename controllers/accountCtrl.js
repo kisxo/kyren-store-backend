@@ -50,6 +50,29 @@ const addAccountController = async (req, res) => {
   }
 };
 
+const getAllAccountsController = async (req, res) => {
+  try {
+    const allAccounts = await accountModel.find();
+    if (allAccounts.length === 0) {
+      return res
+        .status(200)
+        .send({ success: false, message: "No Accounts Found" });
+    }
+    res.status(201).send({
+      success: true,
+      message: "Accounts Fetched Success",
+      data: allAccounts,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: `Get All Accounts Controller ${error.message}`,
+    });
+  }
+};
+
 module.exports = {
   addAccountController,
+  getAllAccountsController,
 };
